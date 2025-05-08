@@ -1,0 +1,32 @@
+
+body {
+    font-family: sans-serif;
+    line-height: 1.6;
+    background: #f9f9f9;
+    color: #333;
+    margin: 0;
+}
+header {
+    background: #006699;
+    color: #fff;
+    padding: 10px 20px;
+}
+header h1 {
+    margin: 0;
+}
+nav ul {
+    list-style: none;
+    padding: 0;
+}
+nav li {
+    display: inline;
+    margin-right: 15px;
+}
+main {
+    padding: 20px;
+}
+footer {
+    text-align: center;
+    padding: 10px;
+    background: #ddd;
+}
