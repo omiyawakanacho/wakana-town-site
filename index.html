@@ -19,7 +19,7 @@
   </div>
 
   <script>
-alert("1");
+
     const firebaseConfig = {
       apiKey: "AIzaSyAn-XGz8iAtjxuN39SheOaF9nQf2LuCYYM",
       authDomain: "wakana-town-site.firebaseapp.com",
@@ -29,21 +29,26 @@ alert("1");
       //appId: "1:939136744820:web:2e9ba9eb77288a684a4021",
       //measurementId: "G-Z6VWWHKPFV"
     };
- alert("2");
+
+  try {
+    const app = firebase.initializeApp(firebaseConfig);
+    console.log("✅ Firebase initialized:", app);
+  } catch (e) {
+    console.error("❌ Firebase init failed:", e);
+  }
     firebase.initializeApp(firebaseConfig);
-     alert("2-1");
+
     const auth = firebase.auth();
-     alert("2-2");
+
     const db = firebase.firestore();
-     alert("2-3");
- alert("3");
+
     auth.onAuthStateChanged(async user => {
       if (user) {
          alert("3-1");
         // Firestore に会員情報が未登録なら登録する
         const docRef = db.collection("users").doc(user.uid);
         const doc = await docRef.get();
-        alert("3-1-1");
+
         if (!doc.exists) {
           await docRef.set({
             uid: user.uid,
@@ -53,13 +58,13 @@ alert("1");
             createdAt: new Date()
           });
         }
-        alert("3-1-2");
+
         // 表示切り替え
         document.getElementById("status").style.display = "none";
         document.getElementById("content").style.display = "block";
         document.getElementById("userName").textContent = user.displayName || user.email;
       } else {
-        alert("3-2");
+
         auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
       }
     });
