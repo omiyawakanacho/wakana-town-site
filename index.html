@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>大宮若菜町 - 会員専用サイト</title>
+  <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js"></script>
+</head>
+<body>
+  <h1>大宮若菜町 会員専用ページ</h1>
+
+  <div id="status">ログイン確認中...</div>
+
+  <div id="content" style="display:none;">
+    <p>ようこそ、<span id="userName"></span> さん</p>
+    <button onclick="firebase.auth().signOut()">ログアウト</button>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAn-XGz8iAtjxuN39SheOaF9nQf2LuCYYM",
+      authDomain: "wakana-town-site.firebaseapp.com",
+      projectId: "wakana-town-site",
+      storageBucket: "wakana-town-site.firebasestorage.app",
+      messagingSenderId: "939136744820",
+      appId: "1:939136744820:web:2e9ba9eb77288a684a4021",
+      measurementId: "G-Z6VWWHKPFV"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    auth.onAuthStateChanged(async user => {
+      if (user) {
+        // Firestore に会員情報が未登録なら登録する
+        const docRef = db.collection("users").doc(user.uid);
+        const doc = await docRef.get();
+        if (!doc.exists) {
+          await docRef.set({
+            uid: user.uid,
+            email: user.email,
+            name: user.displayName || "",
+            role: "member",
+            createdAt: new Date()
+          });
+        }
+
+        // 表示切り替え
+        document.getElementById("status").style.display = "none";
+        document.getElementById("content").style.display = "block";
+        document.getElementById("userName").textContent = user.displayName || user.email;
+      } else {
+        auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+      }
+    });
+  </script>
+</body>
+</html>
