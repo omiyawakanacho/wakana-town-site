@@ -30,8 +30,11 @@ alert("1");
     };
  alert("2");
     firebase.initializeApp(firebaseConfig);
+     alert("2-1");
     const auth = firebase.auth();
+     alert("2-2");
     const db = firebase.firestore();
+     alert("2-3");
  alert("3");
     auth.onAuthStateChanged(async user => {
       if (user) {
