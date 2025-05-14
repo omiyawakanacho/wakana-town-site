@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>役員メニュー</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; background: #eef5ff; }
+    .hidden { display: none; }
+    .notice { color: red; }
+    ul { margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>役員メニュー</h1>
+  <button id="logoutBtn">ログアウト</button>
+  <div id="notAllowed" class="notice hidden">※ 役員（officer）のみアクセス可能です。</div>
+  <div id="menu" class="hidden">
+    <ul>
+      <li><a href="event-management.html">行事の管理</a></li>
+      <li><a href="fund-management.html">会費・募金管理</a></li>
+      <li><a href="task-review.html">課題・審議状況確認</a></li>
+    </ul>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAn-XGz8iAtjxuN39SheOaF9nQf2LuCYYM",
+      authDomain: "wakana-town-site.firebaseapp.com",
+      projectId: "wakana-town-site",
+      storageBucket: "wakana-town-site.firebasestorage.app",
+      messagingSenderId: "939136744820",
+      appId: "1:939136744820:web:2e9ba9eb77288a684a4021",
+      measurementId: "G-Z6VWWHKPFV"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    document.getElementById("logoutBtn").onclick = () => firebase.auth().signOut();
+
+    firebase.auth().onAuthStateChanged(async (user) => {
+      if (!user) return location.href = "index.html";
+      const doc = await db.collection("users").doc(user.uid).get();
+      if (!doc.exists || doc.data().role !== "officer") {
+        document.getElementById("notAllowed").classList.remove("hidden");
+        return;
+      }
+      document.getElementById("menu").classList.remove("hidden");
+    });
+  </script>
+</body>
+</html>
