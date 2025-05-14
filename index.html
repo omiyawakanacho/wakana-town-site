@@ -4,73 +4,27 @@
   <meta charset="UTF-8">
   <title>大宮若菜町 町内会ポータル</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-
   <style>
-    body {
-      font-family: sans-serif;
-      padding: 2rem;
-      background-color: #f8f8f8;
-    }
-    h1 {
-      color: #2c3e50;
-    }
-    button {
-      padding: 0.6rem 1.2rem;
-      font-size: 1rem;
-      margin-right: 1rem;
-    }
-    #status {
-      margin: 1rem 0;
-      font-weight: bold;
-    }
-    .section {
-      margin-top: 2rem;
-      padding: 1rem;
-      border: 1px solid #ccc;
-      background: #fff;
-    }
+    body { font-family: sans-serif; padding: 2rem; background-color: #f4f4f4; }
+    .hidden { display: none; }
+    button { padding: 0.5rem 1rem; font-size: 1rem; }
+    #status { margin-top: 1rem; }
   </style>
 </head>
 <body>
 
   <h1>大宮若菜町 町内会ポータル</h1>
-
   <button id="loginBtn">Googleでログイン</button>
-  <button id="logoutBtn" style="display:none;">ログアウト</button>
+  <button id="logoutBtn" class="hidden">ログアウト</button>
+
   <div id="status">ログイン状態を確認中...</div>
+  <div id="messageArea"></div>
 
-  <!-- ↓↓↓ 表示切り替え対象ブロック ↓↓↓ -->
-
-  <div id="adminContent" class="section" style="display:none;">
-    <h2>管理者向け機能</h2>
-    <ul>
-      <li>会員名簿の編集</li>
-      <li>予算の登録・変更</li>
-      <li>全体設定の変更</li>
-    </ul>
-  </div>
-
-  <div id="officerContent" class="section" style="display:none;">
-    <h2>役員向け機能</h2>
-    <ul>
-      <li>行事・イベントの登録</li>
-      <li>配布物のアップロード</li>
-    </ul>
-  </div>
-
-  <div id="generalContent" class="section" style="display:none;">
-    <h2>一般会員向けページ</h2>
-    <p>お知らせ・行事予定の閲覧、申し込み など</p>
-  </div>
-
-  <!-- Firebase 初期化＆処理スクリプト -->
   <script>
-    // 🔑 Firebase設定（あなたのプロジェクト用に修正）
+    // Firebase Config（wakana-town-site 専用）
     const firebaseConfig = {
       apiKey: "AIzaSyAn-XGz8iAtjxuN39SheOaF9nQf2LuCYYM",
       authDomain: "wakana-town-site.firebaseapp.com",
@@ -80,89 +34,64 @@
       appId: "1:939136744820:web:2e9ba9eb77288a684a4021",
       measurementId: "G-Z6VWWHKPFV"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // DOM取得
     const loginBtn = document.getElementById("loginBtn");
     const logoutBtn = document.getElementById("logoutBtn");
     const statusDiv = document.getElementById("status");
+    const messageArea = document.getElementById("messageArea");
 
-    const adminContent = document.getElementById("adminContent");
-    const officerContent = document.getElementById("officerContent");
-    const generalContent = document.getElementById("generalContent");
-
-    // ログイン処理
     loginBtn.addEventListener("click", () => {
       const provider = new firebase.auth.GoogleAuthProvider();
-      firebase.auth().signInWithPopup(provider)
-        .then(result => {
-          console.log("✅ ログイン成功:", result.user);
-        })
-        .catch(error => {
-          console.error("❌ ログイン失敗:", error);
-          alert(error.message);
-        });
+      firebase.auth().signInWithPopup(provider);
     });
 
-    // ログアウト処理
     logoutBtn.addEventListener("click", () => {
-      firebase.auth().signOut().then(() => {
-        console.log("✅ ログアウトしました");
-      });
+      firebase.auth().signOut();
     });
 
-    // 認証状態の変化
-    firebase.auth().onAuthStateChanged((user) => {
+    firebase.auth().onAuthStateChanged(async (user) => {
       if (user) {
-        loginBtn.style.display = "none";
-        logoutBtn.style.display = "inline-block";
+        loginBtn.classList.add("hidden");
+        logoutBtn.classList.remove("hidden");
         statusDiv.textContent = `ログイン中：${user.displayName}（${user.email}）`;
 
-        // Firestoreに登録 or 取得
-        const userRef = db.collection("users").doc(user.uid);
-        userRef.get().then(doc => {
+        try {
+          const docRef = db.collection("users").doc(user.uid);
+          const doc = await docRef.get();
           if (!doc.exists) {
-            // 初回ログイン：登録
-            userRef.set({
-              uid: user.uid,
-              email: user.email,
-              name: user.displayName || "未設定",
-              role: "一般",
-              joinedAt: new Date().toISOString()
-            }).then(() => {
-              console.log("✅ Firestoreに登録しました");
-              showContentByRole("一般");
-            });
-          } else {
-            const role = doc.data().role || "一般";
-            showContentByRole(role);
-            console.log(`✅ Firestoreロール = ${role}`);
+            messageArea.textContent = "⚠️ Firestore にユーザー情報がありません。管理者に連絡してください。";
+            return;
           }
-        });
+
+          const role = doc.data().role || "member";
+
+          switch (role) {
+            case "admin":
+              window.location.href = "member-list.html";
+              break;
+            case "officer":
+              messageArea.textContent = "ようこそ、役員ページは現在準備中です。";
+              break;
+            case "member":
+            default:
+              messageArea.textContent = "ようこそ、大宮若菜町の町内会ポータルへ。";
+              break;
+          }
+
+        } catch (err) {
+          console.error("Firestore エラー:", err);
+          messageArea.textContent = "データ取得中にエラーが発生しました。";
+        }
+
       } else {
-        loginBtn.style.display = "inline-block";
-        logoutBtn.style.display = "none";
+        loginBtn.classList.remove("hidden");
+        logoutBtn.classList.add("hidden");
         statusDiv.textContent = "ログインしていません。";
-        hideAllRoles();
+        messageArea.textContent = "";
       }
     });
-
-    // 表示切り替え関数
-    function showContentByRole(role) {
-      hideAllRoles();
-      if (role === "管理者") adminContent.style.display = "block";
-      if (role === "役員" || role === "管理者") officerContent.style.display = "block";
-      generalContent.style.display = "block";
-    }
-
-    function hideAllRoles() {
-      adminContent.style.display = "none";
-      officerContent.style.display = "none";
-      generalContent.style.display = "none";
-    }
   </script>
-
 </body>
 </html>
