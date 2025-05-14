@@ -1,15 +1,46 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Firebase Google Login Demo</title>
-  <!-- Firebase SDKs -->
+  <meta charset="UTF-8">
+  <title>大宮若菜町 町内会ポータル</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      background-color: #f4f4f4;
+    }
+    h1 {
+      color: #2c3e50;
+    }
+    button {
+      padding: 0.7rem 1.2rem;
+      font-size: 1rem;
+      margin-right: 1rem;
+    }
+    #status {
+      margin-top: 1rem;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>大宮若菜町 町内会ポータル</h1>
+
+  <button id="loginBtn">Googleでログイン</button>
+  <button id="logoutBtn" style="display:none;">ログアウト</button>
+
+  <div id="status">ログイン状態を確認中...</div>
+
   <script>
-    // Firebase 初期設定
+    // Firebase 初期化（プロジェクトに合わせて修正）
     const firebaseConfig = {
       apiKey: "AIzaSyAn-XGz8iAtjxuN39SheOaF9nQf2LuCYYM",
       authDomain: "wakana-town-site.firebaseapp.com",
@@ -20,49 +51,67 @@
       measurementId: "G-Z6VWWHKPFV"
     };
     firebase.initializeApp(firebaseConfig);
-  </script>
+    const db = firebase.firestore();
 
-<script>
-  const loginBtn = document.getElementById('loginBtn');
-  const logoutBtn = document.getElementById('logoutBtn');
+    // DOM要素
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const statusDiv = document.getElementById("status");
 
-  // Googleログイン
-  loginBtn.addEventListener('click', () => {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    firebase.auth().signInWithPopup(provider)
-      .then((result) => {
-        console.log("✅ ログイン成功", result.user);
-      })
-      .catch((error) => {
-        console.error("❌ Googleログイン中にエラー:", error);
-        alert(error.message);
-      });
-  });
-
-  // ログアウト
-  logoutBtn.addEventListener('click', () => {
-    firebase.auth().signOut().then(() => {
-      console.log("✅ ログアウトしました");
+    // ログイン処理
+    loginBtn.addEventListener("click", () => {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      firebase.auth().signInWithPopup(provider)
+        .then((result) => {
+          console.log("✅ ログイン成功:", result.user);
+        })
+        .catch((error) => {
+          console.error("❌ ログインエラー:", error);
+          alert(error.message);
+        });
     });
-  });
 
-  // 状態変化に応じてボタン表示切替
-  firebase.auth().onAuthStateChanged((user) => {
-    if (user) {
-      loginBtn.style.display = "none";
-      logoutBtn.style.display = "inline-block";
-    } else {
-      loginBtn.style.display = "inline-block";
-      logoutBtn.style.display = "none";
-    }
-  });
-</script>
-  
-</head>
-<body>
-<!-- ログインボタン -->
-<button id="loginBtn">Googleでログイン</button>
-<!-- ログアウトボタン -->
-<button id="logoutBtn" style="display:none;">ログアウト</button>
+    // ログアウト処理
+    logoutBtn.addEventListener("click", () => {
+      firebase.auth().signOut()
+        .then(() => {
+          console.log("✅ ログアウトしました");
+        });
+    });
+
+    // 認証状態の変化
+    firebase.auth().onAuthStateChanged((user) => {
+      if (user) {
+        // ボタン表示
+        loginBtn.style.display = "none";
+        logoutBtn.style.display = "inline-block";
+        statusDiv.textContent = `ログイン中：${user.displayName}（${user.email}）`;
+
+        // Firestore に登録（users コレクション）
+        const userRef = db.collection("users").doc(user.uid);
+        userRef.get().then((doc) => {
+          if (!doc.exists) {
+            userRef.set({
+              uid: user.uid,
+              email: user.email,
+              name: user.displayName || "未設定",
+              role: "一般",
+              joinedAt: new Date().toISOString()
+            }).then(() => {
+              console.log("✅ Firestore に新規登録しました");
+            }).catch((err) => {
+              console.error("❌ Firestore登録エラー:", err);
+            });
+          } else {
+            console.log("✅ Firestore に既に存在します");
+          }
+        });
+      } else {
+        loginBtn.style.display = "inline-block";
+        logoutBtn.style.display = "none";
+        statusDiv.textContent = "ログインしていません。";
+      }
+    });
+  </script>
 </body>
 </html>
