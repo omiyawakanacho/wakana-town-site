@@ -4,23 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Firebase Google Login Demo</title>
-</head>
-<body>
-  <!-- ユーザー情報表示エリア（デフォルト非表示） -->
-  <div id="user-info" style="display: none;">
-    ようこそ、<span id="user-name"></span> さん！
-    <button id="logout-btn">ログアウト</button>
-  </div>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   
-  <!-- ログインボタン（初期表示） -->
-  <button id="login-btn">Googleでログイン</button>
-
-  <!-- Firebase SDK v10.12.0（UMD版）の読み込み -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script>
-    // Firebase設定オブジェクト（提供されたfirebaseConfigを使用）
+    // Firebase 初期設定
     const firebaseConfig = {
       apiKey: "AIzaSyAn-XGz8iAtjxuN39SheOaF9nQf2LuCYYM",
       authDomain: "wakana-town-site.firebaseapp.com",
@@ -30,74 +19,50 @@
       appId: "1:939136744820:web:2e9ba9eb77288a684a4021",
       measurementId: "G-Z6VWWHKPFV"
     };
-
-  try {
-    const app = firebase.initializeApp(firebaseConfig);
-    console.log("✅ Firebase initialized:", app);
-  } catch (e) {
-    console.error("❌ Firebase init failed:", e);
-  }
-    
-    // Firebase初期化
-    //firebase.initializeApp(firebaseConfig);
-
-    // AuthとFirestoreサービスの参照を取得
-    const auth = firebase.auth();
-    const db   = firebase.firestore();
-
-    // Google認証プロバイダのインスタンスを作成
-    const provider = new firebase.auth.GoogleAuthProvider();
-
-    // DOM要素の参照を取得
-    const loginBtn   = document.getElementById('login-btn');
-    const logoutBtn  = document.getElementById('logout-btn');
-    const userInfo   = document.getElementById('user-info');
-    const userNameEl = document.getElementById('user-name');
-
-    // 「Googleでログイン」ボタン押下時の処理
-    loginBtn.addEventListener('click', () => {
-      auth.signInWithPopup(provider)
-        .then(result => {
-          // ログイン成功時
-          const user = result.user;
-          if (result.additionalUserInfo && result.additionalUserInfo.isNewUser) {
-            // 新規ユーザーの場合、Firestoreにユーザーデータを保存:contentReference[oaicite:1]{index=1}
-            db.collection('users').doc(user.uid).set({
-              uid:   user.uid,
-              email: user.email,
-              role:  'user'  // 初回登録ユーザーのロール（例として"user"を設定）
-            }).catch(err => {
-              console.error('Firestoreへのユーザー登録中にエラー:', err);
-            });
-          }
-          // この時点で onAuthStateChanged が呼ばれ、UI更新が行われます
-        })
-        .catch(error => {
-          console.error('Googleログイン中にエラーが発生:', error);
-        });
-    });
-
-    // 「ログアウト」ボタン押下時の処理
-    logoutBtn.addEventListener('click', () => {
-      auth.signOut().catch(error => {
-        console.error('ログアウト中にエラーが発生:', error);
-      });
-      // サインアウト後は自動的に onAuthStateChanged が呼ばれます
-    });
-
-    // 認証状態の変化を監視し、UIを更新
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        // ユーザーがログイン済み
-        userNameEl.textContent = user.displayName || user.email || "（名無し）";
-        userInfo.style.display = 'block';   // ユーザー情報表示エリアを表示
-        loginBtn.style.display = 'none';    // ログインボタンを非表示
-      } else {
-        // ユーザーがログアウト済み、または未ログイン
-        userInfo.style.display = 'none';    // ユーザー情報表示エリアを非表示
-        loginBtn.style.display = 'inline-block';  // ログインボタンを表示
-      }
-    });
+    firebase.initializeApp(firebaseConfig);
   </script>
+
+<script>
+  const loginBtn = document.getElementById('loginBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+
+  // Googleログイン
+  loginBtn.addEventListener('click', () => {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    firebase.auth().signInWithPopup(provider)
+      .then((result) => {
+        console.log("✅ ログイン成功", result.user);
+      })
+      .catch((error) => {
+        console.error("❌ Googleログイン中にエラー:", error);
+        alert(error.message);
+      });
+  });
+
+  // ログアウト
+  logoutBtn.addEventListener('click', () => {
+    firebase.auth().signOut().then(() => {
+      console.log("✅ ログアウトしました");
+    });
+  });
+
+  // 状態変化に応じてボタン表示切替
+  firebase.auth().onAuthStateChanged((user) => {
+    if (user) {
+      loginBtn.style.display = "none";
+      logoutBtn.style.display = "inline-block";
+    } else {
+      loginBtn.style.display = "inline-block";
+      logoutBtn.style.display = "none";
+    }
+  });
+</script>
+  
+</head>
+<body>
+<!-- ログインボタン -->
+<button id="loginBtn">Googleでログイン</button>
+<!-- ログアウトボタン -->
+<button id="logoutBtn" style="display:none;">ログアウト</button>
 </body>
 </html>
