@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>町内ニュース</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <style>
+    body { font-family: sans-serif; background: #fff8f0; padding: 2rem; }
+    h1 { font-size: 1.5rem; }
+    .hidden { display: none; }
+    .notice { color: red; }
+    .news-item { margin-bottom: 1.5rem; border-bottom: 1px solid #ccc; padding-bottom: 1rem; }
+    .news-item h2 { margin: 0; font-size: 1.1rem; }
+    .news-item p { margin: 0.5rem 0 0; }
+    #logoutBtn { margin-top: 1rem; }
+  </style>
+</head>
+<body>
+
+  <h1>大宮若菜町からのお知らせ</h1>
+  <button id="logoutBtn">ログアウト</button>
+  <div id="notAllowed" class="notice hidden">※ 一般会員（member）のみアクセス可能です。</div>
+
+  <div id="newsArea" class="hidden">
+    <!-- ニュース記事がここに表示されます -->
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAn-XGz8iAtjxuN39SheOaF9nQf2LuCYYM",
+      authDomain: "wakana-town-site.firebaseapp.com",
+      projectId: "wakana-town-site",
+      storageBucket: "wakana-town-site.firebasestorage.app",
+      messagingSenderId: "939136744820",
+      appId: "1:939136744820:web:2e9ba9eb77288a684a4021",
+      measurementId: "G-Z6VWWHKPFV"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    document.getElementById("logoutBtn").onclick = () => firebase.auth().signOut();
+
+    firebase.auth().onAuthStateChanged(async (user) => {
+      if (!user) return location.href = "index.html";
+      const doc = await db.collection("users").doc(user.uid).get();
+      if (!doc.exists || doc.data().role !== "member") {
+        document.getElementById("notAllowed").classList.remove("hidden");
+        return;
+      }
+
+      const newsArea = document.getElementById("newsArea");
+      const snapshot = await db.collection("news").orderBy("date", "desc").limit(10).get();
+      snapshot.forEach(doc => {
+        const d = doc.data();
+        const div = document.createElement("div");
+        div.className = "news-item";
+        div.innerHTML = `<h2>${d.title}</h2><p>${d.body}</p><small>${d.date?.toDate().toLocaleDateString() || ""}</small>`;
+        newsArea.appendChild(div);
+      });
+      newsArea.classList.remove("hidden");
+    });
+  </script>
+
+</body>
+</html>
