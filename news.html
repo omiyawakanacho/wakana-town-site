@@ -52,12 +52,14 @@
       }
 
       const newsArea = document.getElementById("newsArea");
-      const snapshot = await db.collection("news").orderBy("date", "desc").limit(10).get();
+      //const snapshot = await db.collection("news").orderBy("date", "desc").limit(10).get();
+       const snapshot = await db.collection("users").get();
       snapshot.forEach(doc => {
         const d = doc.data();
         const div = document.createElement("div");
         div.className = "news-item";
-        div.innerHTML = `<h2>${d.title}</h2><p>${d.body}</p><small>${d.date?.toDate().toLocaleDateString() || ""}</small>`;
+        //div.innerHTML = `<h2>${d.title}</h2><p>${d.body}</p><small>${d.date?.toDate().toLocaleDateString() || ""}</small>`;
+        div.innerHTML = `<h2>${d.name}</h2><p>${d.email}</p><small>${d.role || ""}</small>`;
         newsArea.appendChild(div);
       });
       newsArea.classList.remove("hidden");
