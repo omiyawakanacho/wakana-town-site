@@ -50,14 +50,17 @@
         return;
       }
 
+      console.log("✅ onAuthStateChanged:", "1");
       const snapshot = await db.collection("users").get();
       const tbody = document.getElementById("userTableBody");
+      console.log("✅ snapshot:", "1");
       snapshot.forEach(doc => {
         const d = doc.data();
         const row = document.createElement("tr");
         row.innerHTML = `<td>${d.name || ""}</td><td>${d.email || ""}</td><td>${d.role || "member"}</td>`;
         tbody.appendChild(row);
       });
+      console.log("✅ forEach:", "1");
       document.getElementById("userTable").classList.remove("hidden");
     });
   </script>
